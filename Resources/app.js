@@ -6,23 +6,24 @@ Ti.include("soundbridge.js");
 
 Titanium.UI.setBackgroundColor('#000');
 
-//var sb = new SoundBridge("markus.homelinux.net",443);
-//sb.connect();
+var sb = new SoundBridge("192.168.0.108","5555");
+sb.connect();
+
 
 // create tab group
 var tabGroup = Titanium.UI.createTabGroup();
-
 
 //
 // create base UI tab and root window
 //
 var win1 = Titanium.UI.createWindow({  
-    title:'Tab 1',
-    backgroundColor:'#fff'
+    title:'Search',
+    backgroundColor:'#fff',
+    navBarHidden: false
 });
 var tab1 = Titanium.UI.createTab({  
     icon:'KS_nav_views.png',
-    title:'Tab 1',
+    title:'Search',
     window:win1
 });
 
@@ -34,18 +35,28 @@ var search = Titanium.UI.createSearchBar({
     top:0,
 });
 
-search.addEventListener("return",function() {
-    sb.searchAll(search.value);
-});
+
 
 var tableView = Titanium.UI.createTableView({
 						top: 45,
 						separatorColor: "#AAA",
 						left: 0,
 						right: 0,
-						bottom: 45,
-						backgroundColor: "#BBB"
+						bottom: 45
 					    });
+
+
+search.addEventListener("return",function() {
+    sb.searchAll(search.value,function(data) {
+	var tableData = data.map(function(d) { return {'title': d};});
+	tableView.setData(tableData);	
+    });
+});
+
+tableView.addEventListener("click", function(e) {
+	var idx = e["index"];
+	sb.sendCommand("PlayIndex "+idx, function(data) {});
+});
 
 var volumeSlider = Titanium.UI.createSlider({
 						max: 100,
@@ -56,7 +67,19 @@ var volumeSlider = Titanium.UI.createSlider({
 						right: 3
 					    });
 
+sb.getVolume(function(data,cmd) {
+	volumeSlider.value = parseInt(data);
+	volumeSlider.addEventListener("change",function(e) {
+		sb.setVolume(volumeSlider.value);	
+	});
+});
 
+
+
+
+sb.presets(function(data) {
+	Ti.API.info(JSON.stringify(data));
+});
 
 win1.add(search);
 win1.add(tableView);
@@ -67,24 +90,38 @@ win1.add(volumeSlider);
 // create controls tab and root window
 //
 var win2 = Titanium.UI.createWindow({  
-    title:'Tab 2',
-    backgroundColor:'#fff'
+    title:'Presets',
+    backgroundColor:'#fff',
+    navBarHidden: false
+
 });
 var tab2 = Titanium.UI.createTab({  
     icon:'KS_nav_ui.png',
-    title:'Tab 2',
+    title:'Presets',
     window:win2
 });
 
-var label2 = Titanium.UI.createLabel({
-	color:'#999',
-	text:'I am Window 2',
-	font:{fontSize:20,fontFamily:'Helvetica Neue'},
-	textAlign:'center',
-	width:'auto'
+
+var presetTableView = Titanium.UI.createTableView({
+						top: 0,
+						separatorColor: "#AAA",
+						left: 0,
+						right: 0,
+						bottom: 45
+					    });
+
+presetTableView.addEventListener("click",function(e) {
+	var idx = e["index"];
+	sb.sendCommand("PlayPreset "+idx, function(data) {});
 });
 
-win2.add(label2);
+win2.add(presetTableView);
+
+sb.presets(function(data) {
+	var tableData = data.map(function(d) { return {'title': d};});
+	presetTableView.setData(tableData);
+});
+
 
 
 
@@ -95,18 +132,50 @@ tabGroup.addTab(tab1);
 tabGroup.addTab(tab2);  
 
 
+win1.addEventListener("android:volup", function(e) {
+	volumeSlider.value = volumeSlider.value + 5;	
+});
+win1.addEventListener("android:voldown", function(e) {
+	volumeSlider.value = volumeSlider.value - 5;	
+});
+
+
 // open tab group
+var activity = Ti.Android.currentActivity;
+
+activity.onCreateOptionsMenu = function(e) {
+    var menu = e.menu;
+
+    var pause = menu.add({ title: "Pause", itemId: PAUSE });
+    pause.addEventListener("click", function(e) {
+	sb.sendCommand("IrDispatchCommand CK_PAUSE",function(data) {});
+    });
+
+    var play = menu.add({ title: "Play", itemId: PLAY });
+    play.addEventListener("click", function(e) {
+	sb.sendCommand("IrDispatchCommand CK_PLAY",function(data) {});
+    });
+
+    var prev = menu.add({ title: "Previous", itemId: PREV });
+    prev.addEventListener("click", function(e) {
+	sb.sendCommand("IrDispatchCommand CK_NEXT",function(data) {});
+
+    });
+
+    var next = menu.add({ title: "Next", itemId: NEXT });
+    next.addEventListener("click", function(e) {
+	sb.sendCommand("IrDispatchCommand CK_PREVIOUS",function(data) {});
+
+    });
+ 
+};
+
+//activity.onPrepareOptionsMenu = function(e) {
+//    var menu = e.menu;
+//};
+
+
 tabGroup.open();
 
 
-var a = TCP.createExample({hostName: "mountain.homelinux.net", port: "443"});
-a.addEventListener("read",function(e) {
-		       Ti.API.info("###### TULI DATA ##### "+JSON.stringify(e));
-		       search.value = e['data'];
-		   });
-a.connect();
-
-a.write("SetVolume 10\n");
-a.write("SetVolume 10\n");
-a.write("SetVolume 10\n");
 
