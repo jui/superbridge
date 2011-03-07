@@ -6,7 +6,8 @@ Ti.include("soundbridge.js");
 
 Titanium.UI.setBackgroundColor('#000');
 
-var sb = new SoundBridge("192.168.0.108","5555");
+// var sb = new SoundBridge("192.168.0.108","5555");
+var sb = new SoundBridge("mountain.homelinux.net","443");
 sb.connect();
 
 
