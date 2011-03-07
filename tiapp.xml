@@ -7,7 +7,7 @@
 <url>not specified</url>
 <description>Roku Soundbridge mobile client</description>
 <copyright>.</copyright>
-<icon>default_app_logo.png</icon>
+<icon>roku.jpg</icon>
     <persistent-wifi>false</persistent-wifi>
     <prerendered-icon>false</prerendered-icon>
     <statusbar-style>default</statusbar-style>

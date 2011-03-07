@@ -171,9 +171,9 @@ activity.onCreateOptionsMenu = function(e) {
  
 };
 
-//activity.onPrepareOptionsMenu = function(e) {
-//    var menu = e.menu;
-//};
+activity.onPrepareOptionsMenu = function(e) {
+    var menu = e.menu;
+};
 
 
 tabGroup.open();
